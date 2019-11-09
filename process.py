@@ -1,10 +1,10 @@
 
 class Process:
-    def __init__(self, id, burstTime=0, meanInterIOInterval=0 ):
+    def __init__(self, id, burstTime, meanInterIOInterval):
         self.id = id
 
         self.leftBurstTime = burstTime #execution time
-        self.nextStartTime = 0
+        self.nextReadyTime = 0
         self.lastEndTime = 0
 
         self.meanInterIOInterval = meanInterIOInterval #The mean inter-I/O intervals for the jobs
@@ -15,3 +15,5 @@ class Process:
         self.turnaroundTime = 0
         self.runningTime = 0
         self.waitingTime = 0
+
+        self.predictBurstTime = 0

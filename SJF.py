@@ -7,9 +7,9 @@ import numpy
 import random
 
 # time unit : ms
-class FCFS:
+class SJF:
     def __init__(self):
-        self.file = open("FCFS_output.txt", 'a')
+        self.file = open("SJF_output.txt", 'a')
         self.startTime = 0
         self.endTime = 0
         self.currentTime = self.startTime
@@ -21,7 +21,7 @@ class FCFS:
         self.IOTime = 60
         self.emptyIOQueueTime = 0
 
-
+        self.alpha = float(1)/3
 
         # Create 10 jobs with random execution time uniformly distributed between 120s - 240s
         self.processQ = []
@@ -48,8 +48,8 @@ class FCFS:
             # now we have at least one process in ready queue
 
 
-            # FCFS
-            self.processQ = sort("nextReadyTime", self.processQ)
+            # SJF
+            self.processQ = sort("predictBurstTime", self.processQ)
 
             # get next process in ready queue
             p = None
@@ -73,6 +73,8 @@ class FCFS:
             p.turnaroundTime = p.lastEndTime - self.startTime
             p.runningTime = p.runningTime + p.thisRunningTime
 
+            # predict next burst time
+            p.predictBurstTime = int(self.alpha*p.thisRunningTime + (float(1)-self.alpha)*float(p.predictBurstTime))
 
             if(p.leftBurstTime <=0):# p is finished
                 self.record.append([p.turnaroundTime, p.runningTime, p.waitingTime])
@@ -116,19 +118,19 @@ class FCFS:
 
         # print Gantt chart
 
-        string1 = "FCFS: |"
+        string1 = "SJF : |"
         string2 = "      0    "
         sumTime = 0
         for i in range(len(self.record)):
             string1 = string1 + "    P" + str(i) + "     |"
             sumTime += self.record[i][1] + self.record[i][2]
             string2 = string2 + "        " + str(sumTime)
-        print('\n\n                        -------------------------Gantt Chart  (FCFS  Time unit is: ms)-------------------------\n')
+        print('\n\n                        -------------------------Gantt Chart  (SJF  alpha ='+str(round(self.alpha,2))+'  Time unit is: ms)-------------------------\n')
         print(string1)
         print(string2)
-        self.file.write("\n                        -------------------------Gantt Chart  (FCFS  Time unit is: ms)-------------------------\n")
+        self.file.write("\n                        -------------------------Gantt Chart  (SJF  alpha ="+str(round(self.alpha,2))+"  Time unit is: ms)-------------------------\n")
         self.file.write("\n"+string1)
         self.file.write("\n"+string2)
 
 if __name__ == "__main__":
-    FCFS()
+    SJF()

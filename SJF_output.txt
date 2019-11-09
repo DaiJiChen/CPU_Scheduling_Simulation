@@ -1,0 +1,9 @@
+
+CPU utilization:92.68%
+Throughput:340.33processes/minute
+Average turnaround time:0.02minutes/process
+Average waiting time:0.0108minutes/process
+                        -------------------------Gantt Chart  (SJF  alpha =0.33  Time unit is: ms)-------------------------
+
+SJF : |    P0     |    P1     |    P2     |    P3     |    P4     |    P5     |    P6     |    P7     |    P8     |    P9     |
+      0            483        1187        1914        2665        3416        4254        5181        6231        7188        8112

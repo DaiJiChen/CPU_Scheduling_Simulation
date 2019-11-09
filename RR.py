@@ -7,26 +7,31 @@ import numpy
 import random
 
 # time unit : ms
-class FCFS:
+class RR:
     def __init__(self):
-        self.file = open("FCFS_output.txt", 'a')
+        self.file = open("RR_output.txt", 'a')
         self.startTime = 0
         self.endTime = 0
         self.currentTime = self.startTime
 
         self.numberOfProcess = 10
-        self.record = [] # record[p] = [p.turnaroundTime, p.runningTime, p.waitingTime]
+        self.record = []  # record[p] = [p.turnaroundTime, p.runningTime, p.waitingTime]
 
         self.meanInterIOInterval = (30,35,40,45,50,55,60,65,70,75)
         self.IOTime = 60
         self.emptyIOQueueTime = 0
+
+        self.orderL = []
+
+        self.quantum = 50
 
 
 
         # Create 10 jobs with random execution time uniformly distributed between 120s - 240s
         self.processQ = []
         for i in range(self.numberOfProcess):
-            self.processQ.append(Process(i, int(random.uniform(120, 240)), self.meanInterIOInterval[i]))
+            # the randomness of the execution time of a process is mitigated to vary from 150 to 210
+            self.processQ.append(Process(i, 120+int(random.uniform(30, 90)), self.meanInterIOInterval[i]))
 
         self.i = 0
         while(len(self.processQ) != 0 ):
@@ -48,7 +53,7 @@ class FCFS:
             # now we have at least one process in ready queue
 
 
-            # FCFS
+            # RR
             self.processQ = sort("nextReadyTime", self.processQ)
 
             # get next process in ready queue
@@ -64,18 +69,29 @@ class FCFS:
 
 
 
-            ########################## now CPU starts running the process which is stored in p#########################
+            ########################## now CPU starts running the process which is stored in p #########################
+            clockInterrupt = False
             p.waitingTime = p.waitingTime + self.currentTime - p.nextReadyTime
-            interIOTime = int(numpy.random.exponential(p.meanInterIOInterval)) # lambda= 1/mean
+            # in order to mitigate the randomness, the weight of the exponential random value is set to 0.3
+            interIOTime = int(0.7*p.meanInterIOInterval + 0.3*numpy.random.exponential(p.meanInterIOInterval)) # lambda= 1/mean
             p.thisRunningTime = int(min(interIOTime, p.leftBurstTime))
+            if(p.thisRunningTime >= self.quantum):
+                p.thisRunningTime = self.quantum
+                clockInterrupt = True
+
             p.leftBurstTime = p.leftBurstTime - p.thisRunningTime
             p.lastEndTime = self.currentTime + p.thisRunningTime
             p.turnaroundTime = p.lastEndTime - self.startTime
             p.runningTime = p.runningTime + p.thisRunningTime
 
 
-            if(p.leftBurstTime <=0):# p is finished
+            if p.leftBurstTime <=0 :# p is finished
                 self.record.append([p.turnaroundTime, p.runningTime, p.waitingTime])
+
+            elif clockInterrupt: # p is not finished and is interupted by clock
+                p.nextReadyTime = p.lastEndTime
+                p.place = "ready queue"
+                self.processQ.append(p)
 
             else: # p is not finished and p is in I/O queue
                 p.nextReadyTime = int(max(p.lastEndTime, self.emptyIOQueueTime) + self.IOTime)
@@ -83,7 +99,7 @@ class FCFS:
                 self.emptyIOQueueTime = p.nextReadyTime
                 self.processQ.append(p)
 
-
+            self.orderL.append(p.id)
             self.currentTime = p.lastEndTime
             self.endTime = self.currentTime
 
@@ -107,28 +123,22 @@ class FCFS:
         print("Throughput:",throughput,"processes/minute")
         print("Average turnaround time:",averageTurnaroundTime,"minutes/process")
         print("Average waiting time:",averageWaitingTime,"minutes/process")
+        print('\n                        -------------------------Gantt Chart   (RR  quantum =' + str(self.quantum) + '  Time unit is: ms)-------------------------')
+        string = ""
+        for i in range(len(self.orderL)):
+            string = string + "|P" + str(self.orderL[i])
+        print(string)
 
         # print result in FCFS_output.txt
         self.file.write("\nCPU utilization:"+str(CPUUtilization)+"%")
         self.file.write("\nThroughput:"+str(throughput)+"processes/minute")
         self.file.write("\nAverage turnaround time:"+str(averageTurnaroundTime)+"minutes/process")
         self.file.write("\nAverage waiting time:"+str(averageWaitingTime)+"minutes/process")
+        self.file.write('\n                        -------------------------Gantt Chart   (RR  quantum =' + str(
+            self.quantum) + '  Time unit is: ms)-------------------------\n')
+        self.file.write(string)
 
-        # print Gantt chart
 
-        string1 = "FCFS: |"
-        string2 = "      0    "
-        sumTime = 0
-        for i in range(len(self.record)):
-            string1 = string1 + "    P" + str(i) + "     |"
-            sumTime += self.record[i][1] + self.record[i][2]
-            string2 = string2 + "        " + str(sumTime)
-        print('\n\n                        -------------------------Gantt Chart  (FCFS  Time unit is: ms)-------------------------\n')
-        print(string1)
-        print(string2)
-        self.file.write("\n                        -------------------------Gantt Chart  (FCFS  Time unit is: ms)-------------------------\n")
-        self.file.write("\n"+string1)
-        self.file.write("\n"+string2)
 
 if __name__ == "__main__":
-    FCFS()
+        RR()
